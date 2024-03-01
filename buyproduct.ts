@@ -112,6 +112,23 @@ class PricingRule {
     };
   }
 
+  addRule(item: string, rule: IRule): void {
+    const productId = getProductId[item];
+    if (products[productId]) {
+      if (rule.exactQuantity && !rule.maxQuantity && !rule.minQuantity) {
+        // This implies that if we add exactQuantity then we don't add any other rule params to it
+        this.pricingRule[productId] = rule;
+      } else if (!rule.exactQuantity && rule.minQuantity) {
+        // This implies that if we dont add exactQuantity then we make sure we add minQuantity rule param
+        this.pricingRule[productId] = rule;
+      }
+    }
+  }
+
+  getRules(): IPricingRule {
+    return this.pricingRule;
+  }
+
   getDefaultRules(): IPricingRule {
     return this.defaultPricingRule;
   }
@@ -136,3 +153,32 @@ co2.scan("ipd");
 co2.scan("ipd");
 co2.scan("ipd");
 console.log(co2.total());
+
+// Our own rules
+const pricingRule = new PricingRule();
+pricingRule.addRule("mbp", {
+  minQuantity: 3,
+  discountedPrice: 1200,
+  normalPrice: products[getProductId["mbp"]].price,
+});
+
+pricingRule.addRule("vga", {
+  minQuantity: 3,
+  discountedPrice: (products[getProductId["vga"]].price * 2) / 3,
+  maxQuantity: 6,
+  normalPrice: products[getProductId["vga"]].price,
+});
+
+const co3 = new Checkout(pricingRule.getRules());
+co3.scan("mbp");
+co3.scan("mbp");
+co3.scan("mbp");
+co3.scan("vga");
+co3.scan("vga");
+co3.scan("vga");
+co3.scan("vga");
+co3.scan("vga");
+co3.scan("vga");
+co3.scan("vga");
+
+console.log(co3.total());
